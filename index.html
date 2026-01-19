@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Космическое Расписание ULTIMATE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Базовые цвета космоса */
+            --bg-deep: #0a0a2a;
+            --text-bright: #ffffff;
+            --text-dim: #b0c4de;
+            
+            /* Динамические неоновые акценты (меняются JS-ом) */
+            --neon-color: #00e2ee; /* По умолчанию голубой */
+            --neon-glow: 0 0 15px rgba(0, 242, 255, 0.6), 0 0 30px rgba(0, 242, 255, 0.3);
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-bright);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden; /* Чтобы анимации не расширяли экран */
+            position: relative;
+            transition: --neon-color 1s ease, --neon-glow 1s ease; /* Плавная смена цвета темы */
+        }
+
+        /* === АНИМИРОВАННЫЙ ФОН (КОСМОС) === */
+        /* Слои туманностей */
+        .nebula-bg {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            z-index: -2;
+            background: 
+                radial-gradient(circle at center, transparent 30%, var(--bg-deep) 70%),
+                linear-gradient(45deg, rgba(78, 0, 118, 0.3) 0%, rgba(0, 64, 255, 0.3) 50%, rgba(78, 0, 118, 0.3) 100%);
+            background-size: 200% 200%;
+            animation: nebulaMove 30s ease infinite alternate;
+            filter: blur(30px);
+        }
+        /* Слой звезд */
+        .stars-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 5px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 3px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 4px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            animation: starsTwinkle 10s linear infinite;
+        }
+
+        @keyframes nebulaMove {
+            0% { background-position: 0% 50%; transform: rotate(0deg) scale(1); }
+            50% { background-position: 100% 50%; transform: rotate(5deg) scale(1.1); }
+            100% { background-position: 0% 50%; transform: rotate(0deg) scale(1); }
+        }
+        @keyframes starsTwinkle {
+            from { transform: translateY(0); }
+            to { transform: translateY(-550px); } /* Медленное движение вверх */
+        }
+
+        /* === ПРЕМИУМ СТЕКЛОМОРФИЗМ === */
+        .glass {
+            background: rgba(20, 20, 40, 0.4); /* Более прозрачный */
+            backdrop-filter: blur(20px) saturate(120%); /* Сильное размытие */
+            -webkit-backdrop-filter: blur(20px) saturate(120%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        header {
+            text-align: center;
+            position: sticky;
+            top: 20px; /* Отступ сверху */
+            width: 90%;
+            max-width: 480px;
+            padding: 15px 0;
+            z-index: 100;
+            border-radius: 25px;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--neon-color);
+            text-shadow: var(--neon-glow);
+            transition: color 1s ease, text-shadow 1s ease;
+        }
+
+        /* Индикатор недели */
+        .week-indicator-container {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+        
+        .week-status-badge {
+            font-family: 'Orbitron', sans-serif;
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 2px solid var(--neon-color);
+            color: var(--neon-color);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), var(--neon-glow);
+            font-weight: bold;
+            margin-left: 10px;
+            text-transform: uppercase;
+             transition: all 1s ease;
+        }
+
+        /* Контейнер расписания */
+        .schedule-container {
+            width: 90%;
+            max-width: 500px;
+            padding-bottom: 80px;
+        }
+
+        .day-section {
+            margin-bottom: 35px;
+            /* Анимация появления при скролле */
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.8s ease forwards;
+        }
+        /* Задержка анимации для каждого дня */
+        .day-section:nth-child(1) { animation-delay: 0.2s; }
+        .day-section:nth-child(2) { animation-delay: 0.4s; }
+        .day-section:nth-child(3) { animation-delay: 0.6s; }
+        .day-section:nth-child(4) { animation-delay: 0.8s; }
+        .day-section:nth-child(5) { animation-delay: 1.0s; }
+
+
+        /* Подсветка текущего дня */
+        .day-section.today .day-title {
+             color: var(--text-bright);
+             text-shadow: var(--neon-glow);
+        }
+        .day-section.today .lesson-card {
+            border-left-width: 6px;
+            background: rgba(var(--neon-color), 0.15); /* Легкая подсветка фона */
+        }
+
+        .day-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--neon-color);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding-left: 10px;
+            transition: color 1s ease;
+        }
+
+        .lesson-card {
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            border-left: 4px solid var(--neon-color);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Пружинистый эффект */
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Эффект при наведении/нажатии на телефоне */
+        .lesson-card:active, .lesson-card:hover {
+            transform: scale(1.02) translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4), var(--neon-glow);
+            border-left-color: var(--text-bright);
+        }
+        
+        /* Блик на карточке */
+        .lesson-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            transform: scale(0);
+            transition: transform 0.6s ease-out;
+            pointer-events: none;
+        }
+        .lesson-card:active::before, .lesson-card:hover::before {
+             transform: scale(1);
+        }
+
+
+        .time {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: var(--neon-color);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            transition: color 1s ease;
+        }
+        
+        .time::before { content: '►'; margin-right: 8px; font-size: 0.8rem; }
+
+        .subject {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .teacher {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            font-style: italic;
+            display: flex;
+            align-items: center;
+        }
+        .teacher::before { content: ''; display: inline-block; width: 15px; height: 2px; background: var(--text-dim); margin-right: 8px; opacity: 0.5;}
+
+        /* Футер */
+        footer {
+            text-align: center;
+            padding: 25px;
+            width: 100%;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-top: auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .credits-box {
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 30px;
+        }
+
+        .heart { color: #ff0066; animation: heartbeat 1.5s infinite; display: inline-block; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            10% { transform: scale(1.2); }
+            20% { transform: scale(1); }
+            30% { transform: scale(1.2); }
+            50% { transform: scale(1); }
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="nebula-bg"></div>
+<div class="stars-bg"></div>
+
+<header class="glass">
+    <h1>✧Расписание✧ :></h1>
+    <div class="week-indicator-container">
+        <span>☆Статус:</span>
+        <div id="weekBadge" class="week-status-badge">Загрузка...</div>
+    </div>
+</header>
+
+<div class="schedule-container" id="schedule">
+    <div class="day-section" data-day="1">
+        <div class="day-title">Понедельник</div>
+        <div class="lesson-card glass">
+            <div class="time">08:30 - 09:50</div>
+            <div class="subject">Алгебра (прак)</div>
+            <div class="teacher">Джолумбекова М.Т.</div>
+        </div>
+        <div class="lesson-card glass">
+            <div class="time">10:00 - 11:20</div>
+            <div class="subject">Химия (прак)</div>
+            <div class="teacher">Осмонова Ч.</div>
+        </div>
+        <div class="lesson-card glass">
+            <div class="time">11:30 - 12:50</div>
+            <div class="subject">Допризывная подготовка</div>
+            <div class="teacher">Мырзаказы уулу И.</div>
+        </div>
+    </div>
+
+    <div class="day-section" data-day="2">
+        <div class="day-title">Вторник</div>
+        <div class="lesson-card glass week-white">
+            <div class="time">08:30 - 09:50</div>
+            <div class="subject">Алгебра (прак)</div>
+            <div class="teacher">Джолумбекова М.Т.</div>
+        </div>
+        <div class="lesson-card glass week-grey hidden">
+            <div class="time">08:30 - 09:50</div>
+            <div class="subject">Геометрия (прак)</div>
+            <div class="teacher">Джолумбекова М.Т.</div>
+        </div>
+        
+        <div class="lesson-card glass">
+            <div class="time">10:00 - 11:20</div>
+            <div class="subject">Кыргызская литература</div>
+            <div class="teacher">Орозказиева А.</div>
+        </div>
+
+        <div class="lesson-card glass week-white">
+            <div class="time">11:30 - 12:50</div>
+            <div class="subject">Человек и общество</div>
+            <div class="teacher">Исраилова А.Б.</div>
+        </div>
+         <div class="lesson-card glass week-grey hidden">
+            <div class="time">11:30 - 12:50</div>
+            <div class="subject">Кыргызская литература</div>
+            <div class="teacher">Орозказиева А.</div>
+        </div>
+    </div>
+
+    <div class="day-section" data-day="3">
+        <div class="day-title">Среда</div>
+        <div class="lesson-card glass">
+            <div class="time">08:30 - 09:50</div>
+            <div class="subject">Кыргызский язык</div>
+            <div class="teacher">Орозказиева А.К. / Султаналиева М.А.</div>
+        </div>
+        <div class="lesson-card glass">
+            <div class="time">10:00 - 11:20</div>
+            <div class="subject">История (прак)</div>
+            <div class="teacher">Исраилова А.Б.</div>
+        </div>
+        <div class="lesson-card glass">
+            <div class="time">11:30 - 12:50</div>
+            <div class="subject">Иностранный язык</div>
+            <div class="teacher">Казакбаева Г.А.</div>
+        </div>
+        <div class="lesson-card glass">
+            <div class="time">13:00 - 14:20</div>
+            <div class="subject">Русская литература</div>
+            <div class="teacher">Алдашева Э.К.</div>
+        </div>
+    </div>
+
+    <div class="day-section" data-day="4">
+        <div class="day-title">Четверг</div>
+        <div class="lesson-card glass">
+            <div class="time">08:30 - 09:50</div>
+            <div class="subject">Русский язык (прак)</div>
+            <div class="teacher">Алдашева Э.К.</div>
+        </div>
+        <div class="lesson-card glass">
+            <div class="time">10:00 - 11:20</div>
+            <div class="subject">Физика (Астрономия)</div>
+            <div class="teacher">Керимкулова А.Ш.</div>
+        </div>
+
+         <div class="lesson-card glass week-white">
+            <div class="time">11:30 - 12:50</div>
+            <div class="subject">География (прак)</div>
+            <div class="teacher">Атанова З.А.</div>
+        </div>
+         <div class="lesson-card glass week-grey hidden">
+            <div class="time">11:30 - 12:50</div>
+            <div class="subject">Физика (прак)</div>
+            <div class="teacher">Керимкулова А.Ш.</div>
+        </div>
+
+        <div class="lesson-card glass">
+            <div class="time">13:00 - 14:20</div>
+            <div class="subject">Физическая культура</div>
+            <div class="teacher">преп. Ташбеков</div>
+        </div>
+    </div>
+
+    <div class="day-section" data-day="5">
+        <div class="day-title">Пятница</div>
+         <div class="lesson-card glass week-white">
+            <div class="time">08:30 - 09:50</div>
+            <div class="subject">Русская литература</div>
+            <div class="teacher">Алдашева Э.К.</div>
+        </div>
+         <div class="lesson-card glass week-grey hidden">
+            <div class="time">08:30 - 09:50</div>
+            <div class="subject">Биология (прак)</div>
+            <div class="teacher">Эгешова А.А.</div>
+        </div>
+
+        <div class="lesson-card glass">
+            <div class="time">10:00 - 11:20</div>
+            <div class="subject">Деловой иностр. язык</div>
+            <div class="teacher">Жапаркул к А.</div>
+        </div>
+        
+         <div class="lesson-card glass week-white">
+            <div class="time">11:30 - 12:50</div>
+            <div class="subject">Прак. курс грамм. англ.яз</div>
+            <div class="teacher">Жапаркул к А.</div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="credits-box glass">
+        <span>☆Колдонууңуз жагымдуу болсун!☆</span> 
+        <b>Turatbekov</b>
+        <span class="heart">❤</span>
+    </div>
+    <p style="margin-top: 10px; opacity: 0.7;">Автоматическая синхронизация недель</p>
+</footer>
+
+<script>
+    // === АВТОМАТИЧЕСКОЕ ОПРЕДЕЛЕНИЕ НЕДЕЛИ ===
+    function calculateCurrentWeekType() {
+        // Якорная дата: 19 января 2026 = БЕЛАЯ неделя.
+        const anchorDate = new Date('2026-01-19T00:00:00'); 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const diffTime = today.getTime() - anchorDate.getTime();
+        // Расчет количества прошедших полных недель
+        const weeksPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
+
+        // Четные недели от старта = белые, нечетные = серые
+        return (weeksPassed % 2 === 0) ? 'white' : 'grey';
+    }
+
+    // Функция применения типа недели к интерфейсу с анимацией цвета
+    function applyWeekType(weekType) {
+        const whiteLessons = document.querySelectorAll('.week-white');
+        const greyLessons = document.querySelectorAll('.week-grey');
+        const badge = document.getElementById('weekBadge');
+        const root = document.documentElement;
+
+        if (weekType === 'white') {
+            // Показываем белые уроки
+            whiteLessons.forEach(l => l.classList.remove('hidden'));
+            greyLessons.forEach(l => l.classList.add('hidden'));
+            
+            badge.textContent = "БЕЛАЯ НЕДЕЛЯ";
+            // Устанавливаем НЕОНОВЫЙ ГОЛУБОЙ цвет темы
+            root.style.setProperty('--neon-color', '#00f2ff');
+            root.style.setProperty('--neon-glow', '0 0 15px rgba(0, 242, 255, 0.6), 0 0 30px rgba(0, 242, 255, 0.3)');
+            
+        } else {
+            // Показываем серые уроки
+            whiteLessons.forEach(l => l.classList.add('hidden'));
+            greyLessons.forEach(l => l.classList.remove('hidden'));
+
+            badge.textContent = "СЕРАЯ НЕДЕЛЯ";
+             // Устанавливаем НЕОНОВЫЙ ФИОЛЕТОВЫЙ цвет темы
+            root.style.setProperty('--neon-color', '#bd00ff');
+            root.style.setProperty('--neon-glow', '0 0 15px rgba(189, 0, 255, 0.6), 0 0 30px rgba(189, 0, 255, 0.3)');
+        }
+    }
+
+    // === ПОДСВЕТКА ТЕКУЩЕГО ДНЯ ===
+    function highlightToday() {
+        let todayDay = new Date().getDay(); 
+        // Если сегодня воскресенье (0), подсветку не делаем или можно подсветить понедельник
+        if (todayDay === 0) return; 
+
+        const todayBlock = document.querySelector(`.day-section[data-day="${todayDay}"]`);
+        if (todayBlock) {
+            todayBlock.classList.add('today');
+        }
+    }
+
+    // === ЗАПУСК ПРИ ЗАГРУЗКЕ ===
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentWeek = calculateCurrentWeekType();
+        applyWeekType(currentWeek);
+        highlightToday();
+        
+        // Небольшой хак, чтобы на мобилках адресная строка не ломала фон
+        window.addEventListener('resize', () => {
+             document.body.style.minHeight = window.innerHeight + 'px';
+        });
+    });
+
+</script>
+
+</body>
+</html>
